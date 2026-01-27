@@ -12,6 +12,28 @@ protocol SKU {
     func price() -> Int
 }
 
+protocol PricingScheme {
+    func discount(for items: [SKU]) -> Int
+}
+
+class BuyTwoGetOneFree: PricingScheme {
+    private let itemName: String
+    
+    init(itemName: String) {
+        self.itemName = itemName
+    }
+    
+    func discount(for items: [SKU]) -> Int {
+        let matchingItems = items.filter { $0.name == itemName }
+        let count = matchingItems.count
+        
+        let freeItems = count / 3
+        guard freeItems > 0 else { return 0 }
+        
+        let unitPrice = matchingItems[0].price()
+        return freeItems * unitPrice
+    }
+}
 class Item: SKU {
     var name: String
     var priceInPennies: Int
@@ -64,6 +86,7 @@ class Receipt {
 
 class Register {
     private var receipt: Receipt
+    private var pricingSchemes: [PricingScheme] = []
     init() {
         self.receipt = Receipt()
     }
@@ -72,13 +95,20 @@ class Register {
         receipt.add(sku)
     }
     
+    func addPricingScheme(_ scheme: PricingScheme) {
+        pricingSchemes.append(scheme)
+    }
+    
     func subtotal() -> Int {
-        var total: Int = 0
-        for sku in receipt.scannedItems() {
-            total += sku.price()
+        let rawTotal = receipt.total()
+        var totalDiscount = 0
+        
+        for scheme in pricingSchemes {
+            let discount = scheme.discount(for: receipt.scannedItems())
+            totalDiscount += discount
         }
         
-        return total
+        return rawTotal - totalDiscount
     }
     
     func total() -> Receipt {

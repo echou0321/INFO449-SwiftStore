@@ -91,6 +91,36 @@ TOTAL: $7.97
 
         XCTAssertEqual(expectedSubtotal, receipt.total())
     }
+    
+    // Extra credit tests
+    func testThreeItemsNoScheme() {
+        let register = Register()
+        register.scan(Item(name: "Beans (8oz Can)", priceEach: 199))
+        register.scan(Item(name: "Beans (8oz Can)", priceEach: 199))
+        register.scan(Item(name: "Beans (8oz Can)", priceEach: 199))
 
+        XCTAssertEqual(199 * 3, register.subtotal())
+    }
+    
+    func testThreeItemsWithScheme_DiscountApplies() {
+        let register = Register()
+        register.addPricingScheme(BuyTwoGetOneFree(itemName: "Beans (8oz Can)"))
 
+        register.scan(Item(name: "Beans (8oz Can)", priceEach: 199))
+        register.scan(Item(name: "Beans (8oz Can)", priceEach: 199))
+        register.scan(Item(name: "Beans (8oz Can)", priceEach: 199))
+
+        XCTAssertEqual(199 * 2, register.subtotal())
+    }
+    func testSixItemsWithScheme_DiscountAppliesTwice() {
+        let register = Register()
+        register.addPricingScheme(BuyTwoGetOneFree(itemName: "Beans (8oz Can)"))
+
+        for _ in 0..<6 {
+            register.scan(Item(name: "Beans (8oz Can)", priceEach: 199))
+        }
+
+        XCTAssertEqual(199 * 4, register.subtotal())
+    }
+    
 }
