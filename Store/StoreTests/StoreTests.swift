@@ -92,7 +92,7 @@ TOTAL: $7.97
         XCTAssertEqual(expectedSubtotal, receipt.total())
     }
     
-    // Extra credit tests
+    // Extra credit Buy2Get1Free tests
     func testThreeItemsNoScheme() {
         let register = Register()
         register.scan(Item(name: "Beans (8oz Can)", priceEach: 199))
@@ -122,5 +122,40 @@ TOTAL: $7.97
 
         XCTAssertEqual(199 * 4, register.subtotal())
     }
+    // Extra credit Grouping Discount tests
+    func testNoDiscountWithOnlyOneGroup() {
+        let register = Register()
+
+        let scheme = GroupedPricingScheme(
+            isGroupA: nameContains("ketchup"),
+            isGroupB: nameContains("beer"),
+            discountPercent: 10
+        )
+        register.addPricingScheme(scheme)
+
+        register.scan(Item(name: "Ketchup Bottle", priceEach: 300))
+        register.scan(Item(name: "Ketchup Bottle", priceEach: 300))
+
+        XCTAssertEqual(600, register.subtotal())
+    }
+    
+    func testAppliesOnce() {
+        let register = Register()
+
+        let scheme = GroupedPricingScheme(
+            isGroupA: nameContains("ketchup"),
+            isGroupB: nameContains("beer"),
+            discountPercent: 10
+        )
+        register.addPricingScheme(scheme)
+
+        register.scan(Item(name: "Ketchup Bottle", priceEach: 300))
+        register.scan(Item(name: "Craft Beer", priceEach: 500))
+        
+        // 300 * 0.1 = 30, 500 * 0.1 = 50,
+        // 50 + 30 = 80, 800 - 80 = 720
+        XCTAssertEqual(720, register.subtotal())
+    }
+
     
 }

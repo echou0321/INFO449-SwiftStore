@@ -34,6 +34,48 @@ class BuyTwoGetOneFree: PricingScheme {
         return freeItems * unitPrice
     }
 }
+
+class GroupedPricingScheme: PricingScheme {
+    private let isGroupA: (SKU) -> Bool
+    private let isGroupB: (SKU) -> Bool
+    private let discountPercent: Int
+    
+    init(
+        isGroupA: @escaping (SKU) -> Bool,
+        isGroupB: @escaping (SKU) -> Bool,
+        discountPercent: Int
+    ) {
+        self.isGroupA = isGroupA
+        self.isGroupB = isGroupB
+        self.discountPercent = discountPercent
+    }
+    
+    func discount(for items: [SKU]) -> Int {
+        let groupAItems = items.filter { isGroupA($0) }
+        let groupBItems = items.filter { isGroupB($0) }
+        
+        let pairCount = min(groupAItems.count, groupBItems.count)
+        if pairCount == 0 { return 0 }
+        
+        var totalDiscount = 0
+        
+        for i in 0..<pairCount {
+            let itemA = groupAItems[i]
+            let itemB = groupBItems[i]
+            
+            let discountA = itemA.price() * discountPercent / 100
+            let discountB = itemB.price() * discountPercent / 100
+            
+            totalDiscount += discountA + discountB
+        }
+        return totalDiscount
+    }
+}
+
+func nameContains(_ keyword: String) -> (SKU) -> Bool {
+    return { sku in sku.name.lowercased().contains(keyword.lowercased())}
+}
+
 class Item: SKU {
     var name: String
     var priceInPennies: Int
